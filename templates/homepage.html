@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <br>
+    <center>
+        <div class='row'>
+            <div class="col-xl-4">
+                <div class="card" style="width: 25rem;">
+                    <img class="card-img-top" src="../static/images/play.jpg" alt="Play">
+                    <div class="card-body">
+                        <h5 class="card-title">Tłumaczenie słówek</h5>
+                        <p class="card-text">Rozpocznij grę w tłumaczenie słówek.</p>
+                        <a href="{{ url_for('subject_selection') }}" class="btn btn-primary">Graj!</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="card" style="width: 25rem;">
+                    <img class="card-img-top" src="../static/images/learn.jpg" alt="Learn">
+                    <div class="card-body">
+                        <h5 class="card-title">Zobacz listę słówek</h5>
+                        <p class="card-text">Ucz się na słówkach które są w programie.</p>
+                        <a href="#" class="btn btn-secondary">Już wkrótce</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="card" style="width: 25rem;">
+                    <img class="card-img-top" src="../static/images/login.jpg" alt="Login">
+                    <div class="card-body">
+                        <h5 class="card-title">Zaloguj się i graj</h5>
+                        <p class="card-text">Zaloguj się i wgraj swoje listy słówek.</p>
+                        <a href="#" class="btn btn-secondary">Już wkrótce</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </center>
+    <footer class="fixed-bottom">
+        <center>
+            <div class='col-12'>
+              <h6>Program do nauki slowek. Feel free to use</h6>
+            </div>
+        </center>
+    </footer>
+{% endblock %}

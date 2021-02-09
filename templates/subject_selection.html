@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <br>
+    <center>
+        <div class='row'>
+            <div class="col-xl-4">
+                <div class="card" style="width: 25rem;">
+                    <img class="card-img-top" src="../static/images/building.jpg" alt="Play">
+                    <div class="card-body">
+                        <h5 class="card-title">Budynki</h5>
+                        <p class="card-text">Tłumaczenie słówek z kategorii budynki</p>
+                        <form method="POST">
+                            <p><input type="submit" class="btn btn-primary" name="submit_button" value="Graj w budynki"></p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="card" style="width: 25rem;">
+                    <img class="card-img-top" src="../static/images/apparel.jpg" alt="Learn">
+                    <div class="card-body">
+                        <h5 class="card-title">Odzież</h5>
+                        <p class="card-text">Tłumaczenie słówek z kategorii odzież</p>
+                        <form method="POST">
+                            <p><input type="submit" class="btn btn-primary" name="submit_button" value="Graj w odzież"></p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="card" style="width: 25rem;">
+                    <img class="card-img-top" src="../static/images/feelings.jpg" alt="Login">
+                    <div class="card-body">
+                        <h5 class="card-title">Uczucia</h5>
+                        <p class="card-text">Tłumaczenie słówek z kategorii uczucia</p>
+                        <form method="POST">
+                            <p><input type="submit" class="btn btn-primary" name="submit_button" value="Graj w uczucia"></p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class='row'>
+            <div class="col-xl-4">
+                <div class="card" style="width: 25rem;">
+                    <img class="card-img-top" src="../static/images/technology.jpg" alt="Play">
+                    <div class="card-body">
+                        <h5 class="card-title">Technologia</h5>
+                        <p class="card-text">Tłumaczenie słówek z kategorii technologia</p>
+                        <a href="#" class="btn btn-secondary">Już wkrótce!</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="card" style="width: 25rem;">
+                    <img class="card-img-top" src="../static/images/animals.jpg" alt="Learn">
+                    <div class="card-body">
+                        <h5 class="card-title">Zwierzęta</h5>
+                        <p class="card-text">Tłumaczenie słówek z kategorii zwierzęta</p>
+                        <a href="#" class="btn btn-secondary">Już wkrótce!</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="card" style="width: 25rem;">
+                    <img class="card-img-top" src="../static/images/furniture.jpg" alt="Login">
+                    <div class="card-body">
+                        <h5 class="card-title">Meble</h5>
+                        <p class="card-text">Tłumaczenie słówek z kategorii meble</p>
+                        <a href="#" class="btn btn-secondary">Już wkrótce!</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </center>
+{% endblock %}
