@@ -7,10 +7,16 @@ app = Flask(__name__)
 #secret key config 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 
+#program variables store
 class DataStore():
     dbase = None
-
+    random_num = None
+    table_count = None
+    pol1 = None
+    slowko = None
+    tlumaczenie = None
 data = DataStore()
+
 
 @app.route('/')
 def home():
@@ -22,7 +28,6 @@ def about_page():
 
 @app.route('/subject_selection', methods=['POST', 'GET'])
 def subject_selection():
-    #dbase = request.form.get('dbase')
     if request.method == 'POST':
         if request.form["submit_button"] == "Graj w budynki":
             data.dbase='wordlist'
@@ -38,55 +43,91 @@ def subject_selection():
     else:
         return render_template('subject_selection.html')
 
-@app.route('/program', methods=['POST', 'GET'])
-def program():
-    #db connection and config
+def generate_randnum():
+    #db connection
     words = sqlite3.connect('wordsbase.db')
-    #dbase = 'wordlist'
     dbase = data.dbase
-    #variables initial setup, WRONG implementation TODO repair
-    points = 0
-    losowanie = True
 
     #count number of rows in main table
     w = words.cursor()
     w.execute("SELECT COUNT(*) FROM {}".format(dbase))
     elems = w.fetchall()
-    
-    #TODO replace dummy number of rows check
     for i in elems:
         table_count = i[0]
 
-    #random number generator calling specific sql rows
-    #word to translate generator
-
+    #generate random number in range (1, last row number in table); declare variables to Class
     random_num = randrange(1,table_count)
+    data.random_num = random_num
+    data.table_count = table_count
+
+    #save generated random_number to random_processing table to catch repetitive numbers
     w = words.cursor()
-    #save random_number to random_processing table to catch repetitive numbers 
     w.execute("INSERT INTO random_processing (random_num) VALUES (?)", (random_num,))
     words.commit()
+    return random_num, table_count
 
-    #select row number according to random number id    
+def show_random_words():
+    #db connection
+    words = sqlite3.connect('wordsbase.db')
+    w = words.cursor()
+
+    #variables input
+    dbase = data.dbase
+    random_num = data.random_num
+    points = 1
+
+    #select row from table with id_number corresponding to generated random_num    
     w.execute("SELECT pol, ang FROM {} WHERE emp_id = {}".format(dbase, random_num))
     wordss = w.fetchall()
 
+    #loop over query results
     for g in wordss:
         pol = g[0]
         word = g[1] 
-    #setup word to translate
-    pol1 = pol 
-    #setup english translation of word pol1
+
+    #prepare word to translate
+    pol1 = pol
+    data.pol1 = pol1 
+
+    #prepare english translation of word pol1
     slowko = word
+    data.slowko = slowko
+
     #request user translation of word pol1
     tlumaczenie = request.form.get('tlumaczenie')
+    data.tlumaczenie = tlumaczenie
         
     #save word and user input into processing table in wordbase.db
     params = [(int(points), str(slowko), str(tlumaczenie))]
     w.executemany("INSERT INTO processing VALUES (NULL, ?, ?, ?)", params)
     words.commit()
+    return pol1, slowko, tlumaczenie
     
-    #case when user clicks "SUBMIT" button
+@app.route('/program', methods=['POST', 'GET'])
+def program():
+    #db connection
+    words = sqlite3.connect('wordsbase.db')
+    w = words.cursor()
+
+    #table selection variable input
+    dbase = data.dbase
+
+    #variables initial setup, WRONG implementation TODO repair
+    points = 0 
+    losowanie = True
+    
+    #function implementation
+    generate_randnum()
+    random_num = data.random_num
+    table_count  = data.table_count
+    show_random_words()
+    slowko = data.slowko
+    tlumaczenie = data.tlumaczenie
+    pol1 = data.pol1
+    
+    #main case when user clicks "SUBMIT" button
     if request.method == 'POST':
+        #user answer validation
         w.execute("SELECT slowko FROM processing ORDER BY id DESC LIMIT 2")
         process = w.fetchall()
         slowko1 = process[1]
@@ -109,27 +150,7 @@ def program():
             #TODO replace dummy number of rows check
             for o in randoms:
                 random_num_count = o[0]
-            #print(random_num_count)
-            #print(table_count)
-            if random_num_count < table_count - 1:
-                w = words.cursor()
-                w.execute("SELECT * FROM random_processing")
-                random_num_elems = w.fetchall()
-                random_num = randrange(1,table_count)
-                while losowanie == True:
-                    #print(random_num_elems)
-                    #print(random_num)
-                    if random_num in random_num_elems:
-                        losowanie = True
-                    else:
-                        w = words.cursor()
-                        #save random_number to random_processing table to catch repetitive numbers 
-                        w.execute("INSERT INTO random_processing (random_num) VALUES (?)", (random_num,))
-                        words.commit()
-                        losowanie = False
-                return render_template('program.html', pol1=pol1, tlumaczenie = request.form.get('tlumaczenie'))
-            else:
-                return render_template('program.html', pol1=pol1, tlumaczenie = request.form.get('tlumaczenie'))
+            return render_template('program.html', pol1=pol1, tlumaczenie = request.form.get('tlumaczenie'))
         else:
             flash('Wrong answer', 'danger')
             points = points - 1
@@ -140,27 +161,9 @@ def program():
             randoms = w.fetchall()
             for o in randoms:
                 random_num_count = o[0]
-
-            if random_num_count < table_count - 1:
-                w = words.cursor()
-                w.execute("SELECT * FROM random_processing")
-                random_num_elems = w.fetchall()
-                random_num = randrange(1,table_count)
-                while losowanie == True:
-                    if random_num in random_num_elems:
-                        losowanie = True
-                    else:
-                        w = words.cursor()
-                        #save random_number to random_processing table to catch repetitive numbers 
-                        w.execute("INSERT INTO random_processing (random_num) VALUES (?)", (random_num,))
-                        words.commit()
-                        losowanie = False
-                return render_template('program.html', pol1=pol1, tlumaczenie = request.form.get('tlumaczenie'))
-            else:
-                return render_template('program.html', pol1=pol1, tlumaczenie = request.form.get('tlumaczenie'))
+            return render_template('program.html', pol1=pol1, tlumaczenie = request.form.get('tlumaczenie'))   
     else:
         return render_template('program.html', pol1=pol1, tlumaczenie = request.form.get('tlumaczenie'))
             
-
 if __name__ == '__main__':
     app.run(debug=False)
