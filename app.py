@@ -15,8 +15,14 @@ class DataStore():
     pol1 = None
     slowko = None
     tlumaczenie = None
+    points = None
 data = DataStore()
 
+class number_control():
+    control_list = []
+
+class finish_indicator():
+    finish = None
 
 @app.route('/')
 def home():
@@ -26,8 +32,17 @@ def home():
 def about_page():
     return render_template('about_page.html')
 
+@app.route('/end_page')
+def end_page():
+    return render_template('end_page.html')
+
 @app.route('/subject_selection', methods=['POST', 'GET'])
 def subject_selection():
+    #init case after game over - clear control list and reset finish game indicator
+    control_list = []
+    number_control.control_list = control_list
+    finish_indicator.finish = None
+    #back to main case - subject selection
     if request.method == 'POST':
         if request.form["submit_button"] == "Graj w budynki":
             data.dbase='wordlist'
@@ -43,43 +58,54 @@ def subject_selection():
     else:
         return render_template('subject_selection.html')
 
+def db_connection():
+    #function to establish database connection
+    words = sqlite3.connect('wordsbase.db')
+    return words
+
 def generate_randnum():
     #db connection
     words = sqlite3.connect('wordsbase.db')
-    dbase = data.dbase
-
-    #count number of rows in main table
     w = words.cursor()
+    #count number of rows in main table
+    dbase = data.dbase
     w.execute("SELECT COUNT(*) FROM {}".format(dbase))
     elems = w.fetchall()
     for i in elems:
         table_count = i[0]
 
     #generate random number in range (1, last row number in table); declare variables to Class
-    random_num = randrange(1,table_count)
+    losowanie = True
+    control_list = number_control.control_list
+    while losowanie == True:
+        #stop generating numbers when control list table is equal to word list lenght
+        if len(control_list) == table_count - 1:
+            losowanie == False
+            finish_indicator.finish = True
+            return None
+        else:
+            random_num = randrange(1,table_count+1)
+            if random_num in control_list:
+                losowanie = True
+            else:
+                number_control.control_list.append(random_num)
+                losowanie = False 
+    #pass data to external class variables
     data.random_num = random_num
     data.table_count = table_count
-
-    #save generated random_number to random_processing table to catch repetitive numbers
-    w = words.cursor()
-    w.execute("INSERT INTO random_processing (random_num) VALUES (?)", (random_num,))
-    words.commit()
     return random_num, table_count
 
 def show_random_words():
     #db connection
-    words = sqlite3.connect('wordsbase.db')
+    words = db_connection()
     w = words.cursor()
-
     #variables input
     dbase = data.dbase
     random_num = data.random_num
     points = 1
-
     #select row from table with id_number corresponding to generated random_num    
     w.execute("SELECT pol, ang FROM {} WHERE emp_id = {}".format(dbase, random_num))
     wordss = w.fetchall()
-
     #loop over query results
     for g in wordss:
         pol = g[0]
@@ -88,44 +114,23 @@ def show_random_words():
     #prepare word to translate
     pol1 = pol
     data.pol1 = pol1 
-
     #prepare english translation of word pol1
     slowko = word
     data.slowko = slowko
-
     #request user translation of word pol1
     tlumaczenie = request.form.get('tlumaczenie')
     data.tlumaczenie = tlumaczenie
-        
     #save word and user input into processing table in wordbase.db
     params = [(int(points), str(slowko), str(tlumaczenie))]
     w.executemany("INSERT INTO processing VALUES (NULL, ?, ?, ?)", params)
     words.commit()
     return pol1, slowko, tlumaczenie
-    
-@app.route('/program', methods=['POST', 'GET'])
-def program():
-    #db connection
-    words = sqlite3.connect('wordsbase.db')
+
+def answer_validator():
+    words = db_connection()
     w = words.cursor()
-
-    #table selection variable input
-    dbase = data.dbase
-
-    #variables initial setup, WRONG implementation TODO repair
-    points = 0 
-    losowanie = True
-    
-    #function implementation
-    generate_randnum()
-    random_num = data.random_num
-    table_count  = data.table_count
-    show_random_words()
-    slowko = data.slowko
-    tlumaczenie = data.tlumaczenie
     pol1 = data.pol1
-    
-    #main case when user clicks "SUBMIT" button
+
     if request.method == 'POST':
         #user answer validation
         w.execute("SELECT slowko FROM processing ORDER BY id DESC LIMIT 2")
@@ -141,29 +146,28 @@ def program():
         #compare user input to word pol1 translation
         if tlumaczenie == slowko:
             flash('Good answer', 'success')
-            points = points + 1
-            #count number of rows of side random_processing table
-            w = words.cursor()
-            w.execute("SELECT COUNT(*) FROM random_processing")
-            randoms = w.fetchall()
-    
-            #TODO replace dummy number of rows check
-            for o in randoms:
-                random_num_count = o[0]
             return render_template('program.html', pol1=pol1, tlumaczenie = request.form.get('tlumaczenie'))
         else:
             flash('Wrong answer', 'danger')
-            points = points - 1
-            #TODO replace dummy number of rows check
-            #count number of rows of side random_processing table
-            w = words.cursor()
-            w.execute("SELECT COUNT(*) FROM random_processing")
-            randoms = w.fetchall()
-            for o in randoms:
-                random_num_count = o[0]
             return render_template('program.html', pol1=pol1, tlumaczenie = request.form.get('tlumaczenie'))   
     else:
         return render_template('program.html', pol1=pol1, tlumaczenie = request.form.get('tlumaczenie'))
-            
+
+    
+@app.route('/program', methods=['POST', 'GET'])
+def program():
+    #function implementation
+    if finish_indicator.finish == True:
+        return redirect(url_for('end_page'))
+    else:
+        generate_randnum()
+        show_random_words()
+        pol1 = data.pol1
+        #main case when user clicks "SUBMIT" button
+        answer_validator()
+        return render_template('program.html', pol1=pol1, tlumaczenie = request.form.get('tlumaczenie'))
+
 if __name__ == '__main__':
     app.run(debug=False)
+
+
