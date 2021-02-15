@@ -139,9 +139,10 @@ def answer_validator():
 
         w.execute("SELECT tlumaczenie FROM processing ORDER BY id DESC LIMIT 1")
         processs = w.fetchall()
-        tlumaczenie1 = processs[0]           
-        slowko = slowko1
-        tlumaczenie = tlumaczenie1
+        tlumaczenie1 = processs[0]
+        #prepare words to comparision - convert letters to lowercase          
+        slowko = slowko1[0].lower()
+        tlumaczenie = tlumaczenie1[0].lower()
 
         #compare user input to word pol1 translation
         if tlumaczenie == slowko:
