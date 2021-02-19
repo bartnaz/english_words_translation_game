@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <center>
+    <div class="container">
+        <h2>Lista słówek zawartych w aplikacji</h2>
+        <br>
+        <table>
+            <tr>
+                <th>Nr.</th>
+                <th>Polskie słówko</th>
+                <th>Angielskie słówko</th>
+            </tr>
+            {% for k in idnum %}
+                <tr>
+                    <td>{{ idnum[k-1] }}</td>
+                    <td>{{ polword[k-1] }}</td>
+                    <td>{{ engword[k-1] }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <br>
+    </div>
+    </center> 
+{% endblock %}
+
+
+
+
+
+

@@ -1,7 +1,6 @@
 body {
   background: #fafafa;
   color: #333333;
-  margin-top: 5rem;
 }
 
 h1, h2, h3, h4, h6 {
@@ -75,9 +74,31 @@ a.article-title:hover {
   vertical-align: middle;
 }
 
+table, td, th {
+  border: 1px solid #aaa;
+}
+
+table {
+  text-align: center;
+  border-collapse: collapse;
+  width: 70%;
+}
+
+th {
+  text-align: center;
+  height: 10px;
+  
+}
+
+td {
+  text-align: center;
+  padding: 5px;
+  width: 100px;
+}
+
 footer {
   position: fixed;
   height: 40px;
-  bottom: 0px;
+  bottom: 0;
   width: 100%;
 }
