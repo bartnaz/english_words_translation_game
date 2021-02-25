@@ -10,12 +10,18 @@
                 <th>Nr.</th>
                 <th>Polskie słówko</th>
                 <th>Angielskie słówko</th>
+                <th>Ang. słówko inne tłum. </th>
+                <th>Ang. słówko inne tłum. </th>
+                <th>Ang. słówko inne tłum. </th>
             </tr>
             {% for k in idnum %}
                 <tr>
                     <td>{{ idnum[k-1] }}</td>
                     <td>{{ polword[k-1] }}</td>
                     <td>{{ engword[k-1] }}</td>
+                    <td>{{ eng1word[k-1] }}</td>
+                    <td>{{ eng2word[k-1] }}</td>
+                    <td>{{ eng3word[k-1] }}</td>
                 </tr>
             {% endfor %}
         </table>
