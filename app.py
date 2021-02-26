@@ -191,7 +191,6 @@ def show_random_words():
     words.commit()
     return pol1, tlumaczenie
 
-
 def answer_validator():
     words = db_connection()
     w = words.cursor()
@@ -223,20 +222,20 @@ def answer_validator():
             flash('Wrong answer', 'danger')
             return render_template('program.html', pol1=pol1, tlumaczenie=request.form.get('tlumaczenie'))
     else:
-        return render_template('program.html', pol1=pol1, tlumaczenie=request.form.get('tlumaczenie'))
+        return None
 
 
 @app.route('/program', methods=['POST', 'GET'])
 def program():
     # function implementation
+    generate_randnum()
+    show_random_words()
+    pol1 = DataStore.pol1
+    # main case when user clicks "SUBMIT" button
+    answer_validator()
     if FinishIndicator.finish:
         return redirect(url_for('end_page'))
     else:
-        generate_randnum()
-        show_random_words()
-        pol1 = DataStore.pol1
-        # main case when user clicks "SUBMIT" button
-        answer_validator()
         return render_template('program.html', pol1=pol1, tlumaczenie=request.form.get('tlumaczenie'))
 
 
