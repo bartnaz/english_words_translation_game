@@ -39,9 +39,13 @@ def about_page():
     return render_template('about_page.html')
 
 
-@app.route('/end_page')
-def end_page():
-    return render_template('end_page.html')
+def clear_processing():
+    words = sqlite3.connect('wordsbase.db')
+    w = words.cursor()
+    w.execute("DELETE FROM better_processing")
+    words.commit()
+    words.close()
+    return None
 
 
 @app.route('/wordlist_display_selection', methods=['POST', 'GET'])
@@ -105,6 +109,7 @@ def subject_selection():
     # init case after game over - clear control list and reset finish game indicator
     control_list = []
     NumberControl.control_list = control_list
+    DataStore.points = 0
     FinishIndicator.finish = None
     # back to main case - subject selection
     if request.method == 'POST':
@@ -145,7 +150,7 @@ def generate_randnum():
     control_list = NumberControl.control_list
     while losowanie:
         # stop generating numbers when control list table is equal to word list lenght
-        if len(control_list) == table_count - 1:
+        if len(control_list) == table_count:
             losowanie = False
             FinishIndicator.finish = True
             return None
@@ -191,12 +196,11 @@ def show_random_words():
     words.commit()
     return pol1, tlumaczenie
 
+
 def answer_validator():
     words = db_connection()
     w = words.cursor()
-    # load word to translate when request.method == 'POST'
-    pol1 = DataStore.pol1
-
+    
     if request.method == 'POST':
         dbase = DataStore.dbase
         w.execute("SELECT * FROM better_processing ORDER BY id DESC LIMIT 2")
@@ -210,17 +214,18 @@ def answer_validator():
         all = data[0]
         word = all[2::]
 
-        # compare user input to word pol1 translation
-        if tlumaczenie != '':
-            if tlumaczenie in word:
-                flash('Good answer', 'success')
-                return render_template('program.html', pol1=pol1, tlumaczenie=request.form.get('tlumaczenie'))
+        if FinishIndicator.finish != True:
+            # compare user input to word pol1 translation
+            if tlumaczenie != '':
+                if tlumaczenie in word:
+                    flash('Good answer, you get 1 point', 'success')
+                    DataStore.points = DataStore.points + 1
+                else:
+                    flash('Wrong answer', 'danger')
             else:
                 flash('Wrong answer', 'danger')
-                return render_template('program.html', pol1=pol1, tlumaczenie=request.form.get('tlumaczenie'))
-        else:
-            flash('Wrong answer', 'danger')
-            return render_template('program.html', pol1=pol1, tlumaczenie=request.form.get('tlumaczenie'))
+        else: 
+            pass
     else:
         return None
 
@@ -233,10 +238,23 @@ def program():
     pol1 = DataStore.pol1
     # main case when user clicks "SUBMIT" button
     answer_validator()
+    points = DataStore.points
+    max_points = DataStore.table_count - 1
     if FinishIndicator.finish:
-        return redirect(url_for('end_page'))
+        if points >= 0.75*max_points:
+            score = 'good_score'
+            clear_processing()
+            return render_template('end_page.html', score = score, points = points, max_points = max_points)
+        elif points >= 0.5*max_points:
+            score = 'ok_score'
+            clear_processing()
+            return render_template('end_page.html', score = score, points = points, max_points = max_points)
+        else:
+            score = 'bad_score'
+            clear_processing()
+            return render_template('end_page.html', score = score, points = points, max_points = max_points)
     else:
-        return render_template('program.html', pol1=pol1, tlumaczenie=request.form.get('tlumaczenie'))
+        return render_template('program.html', points = points, max_points = max_points, pol1=pol1, tlumaczenie=request.form.get('tlumaczenie'))
 
 
 if __name__ == '__main__':

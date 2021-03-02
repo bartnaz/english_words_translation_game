@@ -4,27 +4,38 @@
     <div class="container">
         <div class="row">
             <div class="col-md-8">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
+                {% if request.method == 'POST' %}
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages  %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">
+                                    {{ message }}
+                                </div> 
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
                 {% endif %}
-                {% endwith %}
             </div> 
         </div>
-        <form method="GET" action="">
-            <fieldset class="form-group">
-                <div class="row">
-                    <div class="col-8">
-                        <label for="pol" class="form-label">Słówko w języku polskim</label>
-                        <input class="form-control" type="text" placeholder='{{ pol1 }}' readonly>
+        <div class="row">
+            <div class="col-sm-1">
+                <label for="pol" class="form-label">Punkty</label>
+                <input class="form-control" type="text" placeholder='{{ points }} / {{ max_points }}' readonly>
+            </div> 
+        </div>
+        <br>
+        <div class="row">
+            <form method="GET" action="">
+                <fieldset class="form-group">
+                    <div class="row">
+                        <div class="col-8">
+                            <label for="pol" class="form-label">Słówko w języku polskim</label>
+                            <input class="form-control" type="text" placeholder='{{ pol1 }}' readonly>
+                        </div>
                     </div>
-                </div>
-            </fieldset>
-        </form>
+                </fieldset>
+            </form>
+        </div>
         <br>
         <div class="row">
             <div class="col-8">
@@ -37,9 +48,3 @@
         </div>
     </div>  
 {% endblock %}
-
-
-
-
-
-
