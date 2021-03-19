@@ -1,8 +1,9 @@
 import os
-import sqlite3
-from random import randrange
 
+from random import randrange
 from flask import Flask, render_template, url_for, request, flash, redirect
+from sql_queries_pack import sql_queries
+
 
 app = Flask(__name__)
 
@@ -39,27 +40,21 @@ def about_page():
     return render_template('about_page.html')
 
 
-def clear_processing():
-    words = sqlite3.connect('wordsbase.db')
-    w = words.cursor()
-    w.execute("DELETE FROM better_processing")
-    words.commit()
-    words.close()
-    return None
-
-
 @app.route('/wordlist_display_selection', methods=['POST', 'GET'])
 def wordlist_display_selection():
     # display wordlist selection
     if request.method == 'POST':
-        if request.form["submit_button"] == "Pokaż budynki":
+        if request.form["submit_button"] == "0":
             DataStore.dbase = 'buildings'
             return redirect(url_for("wordlist_display"))
-        elif request.form["submit_button"] == "Pokaż odzież":
+        elif request.form["submit_button"] == "1":
             DataStore.dbase = 'clothes'
             return redirect(url_for("wordlist_display"))
-        elif request.form["submit_button"] == "Pokaż uczucia":
+        elif request.form["submit_button"] == "2":
             DataStore.dbase = 'emotions'
+            return redirect(url_for("wordlist_display"))
+        elif request.form["submit_button"] == "3":
+            DataStore.dbase = 'interview'
             return redirect(url_for("wordlist_display"))
         else:
             return render_template('homepage.html')
@@ -69,12 +64,8 @@ def wordlist_display_selection():
 
 @app.route('/wordlist_display', methods=['GET'])
 def wordlist_display():
-    # db connection
-    words = sqlite3.connect('wordsbase.db')
-    w = words.cursor()
     dbase = DataStore.dbase
-    w.execute("SELECT emp_id, pol, ang0, ang1, ang2, ang3 FROM {}".format(dbase))
-    results = w.fetchall()
+    results = sql_queries.sql_select(dbase)
     idnum = []
     polword = []
     engword = []
@@ -113,14 +104,17 @@ def subject_selection():
     FinishIndicator.finish = None
     # back to main case - subject selection
     if request.method == 'POST':
-        if request.form["submit_button"] == "Graj w budynki":
+        if request.form["submit_button"] == "0":
             DataStore.dbase = 'buildings'
             return redirect(url_for("program"))
-        elif request.form["submit_button"] == "Graj w odzież":
+        elif request.form["submit_button"] == "1":
             DataStore.dbase = 'clothes'
             return redirect(url_for("program"))
-        elif request.form["submit_button"] == "Graj w uczucia":
+        elif request.form["submit_button"] == "2":
             DataStore.dbase = 'emotions'
+            return redirect(url_for("program"))
+        elif request.form["submit_button"] == "3":
+            DataStore.dbase = 'interview'
             return redirect(url_for("program"))
         else:
             return render_template('homepage.html')
@@ -128,20 +122,10 @@ def subject_selection():
         return render_template('subject_selection.html')
 
 
-def db_connection():
-    # function to establish database connection
-    words = sqlite3.connect('wordsbase.db')
-    return words
-
-
 def generate_randnum():
-    # db connection
-    words = sqlite3.connect('wordsbase.db')
-    w = words.cursor()
     # count number of rows in words table database
     dbase = DataStore.dbase
-    w.execute("SELECT COUNT(*) FROM {}".format(dbase))
-    elems = w.fetchall()
+    elems = sql_queries.table_count(dbase)
     elems = elems[0]
     table_count = elems[0]
 
@@ -168,16 +152,12 @@ def generate_randnum():
 
 
 def show_random_words():
-    # db connection
-    words = db_connection()
-    w = words.cursor()
     # variables input
     dbase = DataStore.dbase
     random_num = DataStore.random_num
 
     # select row from table with id_number corresponding to generated random_num
-    w.execute("SELECT pol FROM {} WHERE emp_id = {}".format(dbase, random_num))
-    wordss = w.fetchall()
+    wordss = sql_queries.rand_num_row_query(dbase, random_num)
 
     # loop over query results
     for g in wordss:
@@ -192,29 +172,23 @@ def show_random_words():
     DataStore.tlumaczenie = tlumaczenie
 
     # pass user input to processing database for further validation
-    w.execute("INSERT INTO better_processing (generated_num, tlumaczenie) VALUES (?, ?)", (random_num, tlumaczenie,))
-    words.commit()
+    sql_queries.insert_into_better_processing(random_num, tlumaczenie)
     return pol1, tlumaczenie
 
 
 def answer_validator():
-    words = db_connection()
-    w = words.cursor()
-    
     if request.method == 'POST':
         dbase = DataStore.dbase
-        w.execute("SELECT * FROM better_processing ORDER BY id DESC LIMIT 2")
-        processs = w.fetchall()
+        processs = sql_queries.select_from_better_processing()
         r_n = processs[1]
         random_num = r_n[1]
         t_l = processs[0]
         tlumaczenie = t_l[2].lower()
-        w.execute("SELECT * FROM {} WHERE emp_id = {}".format(dbase, random_num))
-        data = w.fetchall()
+        data = sql_queries.select_from_better_processing_emp_id(dbase, random_num)
         all = data[0]
         word = all[2::]
 
-        if FinishIndicator.finish != True:
+        if not FinishIndicator.finish:
             # compare user input to word pol1 translation
             if tlumaczenie != '':
                 if tlumaczenie in word:
@@ -224,7 +198,7 @@ def answer_validator():
                     flash('Wrong answer', 'danger')
             else:
                 flash('Wrong answer', 'danger')
-        else: 
+        else:
             pass
     else:
         return None
@@ -243,18 +217,19 @@ def program():
     if FinishIndicator.finish:
         if points >= 0.75*max_points:
             score = 'good_score'
-            clear_processing()
+            sql_queries.clear_processing()
             return render_template('end_page.html', score = score, points = points, max_points = max_points)
         elif points >= 0.5*max_points:
             score = 'ok_score'
-            clear_processing()
+            sql_queries.clear_processing()
             return render_template('end_page.html', score = score, points = points, max_points = max_points)
         else:
             score = 'bad_score'
-            clear_processing()
+            sql_queries.clear_processing()
             return render_template('end_page.html', score = score, points = points, max_points = max_points)
     else:
-        return render_template('program.html', points = points, max_points = max_points, pol1=pol1, tlumaczenie=request.form.get('tlumaczenie'))
+        return render_template('program.html', points = points, max_points = max_points, pol1=pol1, 
+                               tlumaczenie=request.form.get('tlumaczenie'))
 
 
 if __name__ == '__main__':
